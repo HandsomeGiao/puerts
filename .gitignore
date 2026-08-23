@@ -1,3 +1,4 @@
 .DS_Store
 .vscode
 unity/native/papi-python/build_linux_x64_papi-python_debug
+unreal/Puerts/ThirdParty/v8*/

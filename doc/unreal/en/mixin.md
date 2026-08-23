@@ -159,6 +159,35 @@ UE.GameplayStatics.FinishSpawningActor(SpawnedActor, UE.Transform.Identity);
 SpawnedActor?.ExampleFunction();
 ```
 
+### Inheriting TypeScript mixins
+
+When Blueprint classes and TypeScript classes have matching inheritance chains, `blueprint.mixin` collects methods from the full
+TypeScript prototype chain. Collection stops at the matching Unreal wrapper prototype, so native Blueprint methods are not mixed
+back into the class. Methods on the most-derived TypeScript class take precedence.
+
+Register every Blueprint layer independently. Registering the parent does not register the child:
+
+```typescript
+class ParentMixin extends ParentPlaceholder {
+    ReceiveBeginPlay(): void {
+        console.log("parent");
+    }
+}
+
+class ChildMixin extends ParentMixin {
+    ReceiveBeginPlay(): void {
+        super.ReceiveBeginPlay();
+        console.log("child");
+    }
+}
+
+blueprint.mixin(ParentBlueprint, ParentMixin, { objectTakeByNative: true });
+blueprint.mixin(ChildBlueprint, ChildMixin, { objectTakeByNative: true });
+```
+
+The Blueprint and TypeScript hierarchies must correspond. Puerts throws an error if the TypeScript chain reaches an Unreal wrapper
+outside the target Blueprint hierarchy.
+
 ## Notes
 ### Limited function override support
-All functions and events defined in blueprint are supported. C++ functions must be tagged as `BlueprintNativeEvent` or `BlueprintImplementableEvent`. 
+All functions and events defined in blueprint are supported. C++ functions must be tagged as `BlueprintNativeEvent` or `BlueprintImplementableEvent`.

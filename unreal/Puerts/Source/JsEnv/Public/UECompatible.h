@@ -14,6 +14,12 @@
 #include "UObject/UObjectIterator.h"
 #include "PuertsNamespaceDef.h"
 
+#if (ENGINE_MAJOR_VERSION > 5) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 8)
+#define PUERTS_RENAME_ALLOW_PACKAGE_LINKER_MISMATCH REN_AllowPackageLinkerMismatch
+#else
+#define PUERTS_RENAME_ALLOW_PACKAGE_LINKER_MISMATCH REN_ForceNoResetLoaders
+#endif
+
 namespace PUERTS_NAMESPACE
 {
 FORCEINLINE bool UEObjectIsPendingKill(const UObject* Test)

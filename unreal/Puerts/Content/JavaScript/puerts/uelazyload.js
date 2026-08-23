@@ -270,18 +270,53 @@ var global = global || (function () { return this; }());
     
     let __tgjsMixin = global.__tgjsMixin;
     global.__tgjsMixin = undefined;
-    
+
+    function isUEClassPrototype(prototype) {
+        let constructorDescriptor = Object.getOwnPropertyDescriptor(prototype, "constructor");
+        let constructor = constructorDescriptor && constructorDescriptor.value;
+        return typeof constructor === "function"
+            && Object.prototype.hasOwnProperty.call(constructor, "StaticClass")
+            && typeof constructor.StaticClass === "function";
+    }
+
+    function collectMixinMethods(to, mixinClass) {
+        let mixinMethods = Object.create(null);
+        let uePrototypes = new Set();
+        let uePrototype = to.prototype;
+        while (uePrototype) {
+            uePrototypes.add(uePrototype);
+            uePrototype = Object.getPrototypeOf(uePrototype);
+        }
+
+        let prototype = mixinClass.prototype;
+        while (prototype && prototype !== Object.prototype) {
+            if (uePrototypes.has(prototype)) {
+                break;
+            }
+            if (isUEClassPrototype(prototype)) {
+                throw new Error(`mixin class ${mixinClass.name} inherits from a UE class outside ${to.name}'s hierarchy`);
+            }
+
+            let names = Object.getOwnPropertyNames(prototype);
+            for (let i = 0; i < names.length; ++i) {
+                let name = names[i];
+                if (name === "constructor" || Object.prototype.hasOwnProperty.call(mixinMethods, name)) {
+                    continue;
+                }
+                let descriptor = Object.getOwnPropertyDescriptor(prototype, name);
+                if (descriptor && typeof descriptor.value === "function") {
+                    mixinMethods[name] = descriptor.value;
+                }
+            }
+
+            prototype = Object.getPrototypeOf(prototype);
+        }
+        return mixinMethods;
+    }
+
     function mixin(to, mixinClass, config) {
         config = config || {};
-        let mixinMethods = Object.create(null);
-        let names = Object.getOwnPropertyNames(mixinClass.prototype);
-        for(var i = 0; i < names.length; ++i) {
-            let name = names[i];
-            let descriptor = Object.getOwnPropertyDescriptor(mixinClass.prototype, name);
-            if (typeof descriptor.value === 'function' && name != "constructor") {
-                 mixinMethods[name] = mixinClass.prototype[name];
-            }
-        }
+        let mixinMethods = collectMixinMethods(to, mixinClass);
         let cls = __tgjsMixin(to.StaticClass(), mixinMethods, config.objectTakeByNative, config.inherit, config.noMixinedWarning);
         
         let jsCls = UEClassToJSClass(cls);

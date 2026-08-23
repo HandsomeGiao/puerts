@@ -11,6 +11,7 @@
 #include "JSGeneratedFunction.h"
 #include "JSWidgetGeneratedClass.h"
 #include "JSLogger.h"
+#include "UECompatible.h"
 
 #define OLD_METHOD_PREFIX "__puerts_old__"
 #define MIXIN_METHOD_SUFFIX "__puerts_mixin__"
@@ -102,7 +103,7 @@ void UJSGeneratedClass::Override(v8::Isolate* Isolate, UClass* Class, UFunction*
         // UE_LOG(LogTemp, Error, TEXT("replace %s of %s"), *Super->GetName(), *Class->GetName());
         //同一Outer下的同名对象只能有一个...
         Super->Rename(*FString::Printf(TEXT("%s%s"), TEXT(OLD_METHOD_PREFIX), *Super->GetName()), Class,
-            REN_DontCreateRedirectors | REN_DoNotDirty | REN_ForceNoResetLoaders);
+            REN_DontCreateRedirectors | REN_DoNotDirty | PUERTS_RENAME_ALLOW_PACKAGE_LINKER_MISMATCH);
         Class->AddFunctionToFunctionMap(Super, Super->GetFName());
         // UE_LOG(LogTemp, Error, TEXT("rename to %s"), *Super->GetName());
     }
@@ -317,7 +318,8 @@ void UJSGeneratedClass::Restore(UClass* Class)
             {
                 JGF->RemoveFromRoot();
             }
-            JGF->Rename(nullptr, OrphanedClass, REN_DontCreateRedirectors | REN_DoNotDirty | REN_ForceNoResetLoaders);
+            JGF->Rename(
+                nullptr, OrphanedClass, REN_DontCreateRedirectors | REN_DoNotDirty | PUERTS_RENAME_ALLOW_PACKAGE_LINKER_MISMATCH);
             FLinkerLoad::InvalidateExport(JGF);
         }
         else
@@ -338,7 +340,7 @@ void UJSGeneratedClass::Restore(UClass* Class)
             {
                 Class->RemoveFunctionFromFunctionMap(Function);
                 Function->Rename(*Function->GetName().Mid(strlen(OLD_METHOD_PREFIX)), Class,
-                    REN_DontCreateRedirectors | REN_DoNotDirty | REN_ForceNoResetLoaders);
+                    REN_DontCreateRedirectors | REN_DoNotDirty | PUERTS_RENAME_ALLOW_PACKAGE_LINKER_MISMATCH);
                 Class->AddFunctionToFunctionMap(Function, Function->GetFName());
             }
         }

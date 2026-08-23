@@ -13,11 +13,9 @@ public class DeclarationGenerator : ModuleRules
 {
     public DeclarationGenerator(ReadOnlyTargetRules Target) : base(Target) 
     {
-        PublicIncludePaths.AddRange(
-            new string[] {
-                "Programs/UnrealHeaderTool/Public",
-            }
-        );
+#if !UE_5_2_OR_LATER
+        PublicIncludePaths.Add("Programs/UnrealHeaderTool/Public");
+#endif
         PublicDependencyModuleNames.AddRange(
             new string[]
             {

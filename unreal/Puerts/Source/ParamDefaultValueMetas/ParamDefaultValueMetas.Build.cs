@@ -20,11 +20,9 @@ namespace UnrealBuildTool.Rules
 
             PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-            PublicIncludePaths.AddRange(
-                new string[] {
-                    "Programs/UnrealHeaderTool/Public",
-                }
-                );
+#if !UE_5_2_OR_LATER
+            PublicIncludePaths.Add("Programs/UnrealHeaderTool/Public");
+#endif
 
 
             PrivateIncludePaths.AddRange(

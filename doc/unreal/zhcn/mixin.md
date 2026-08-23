@@ -147,6 +147,34 @@ class DerivedClassMixin extends MixinSuperTestBasePlaceHold {
 }
 ~~~
 
+#### TS Mixin 类继承
+
+当 Blueprint 与 TS 具有对应的继承链时，`blueprint.mixin` 会沿 TS prototype 链收集方法，并在目标 Blueprint 对应的 UE
+wrapper prototype 处停止。子类方法优先，父 TS 类中的纯 TS 方法也会被继承；UE wrapper 自身的方法不会被重复 Mixin。
+
+父、子 Blueprint 的每一层都必须独立注册，父层注册不能代替子层注册：
+
+~~~typescript
+class ParentMixin extends ParentPlaceholder {
+    ReceiveBeginPlay(): void {
+        console.log("parent");
+    }
+}
+
+class ChildMixin extends ParentMixin {
+    ReceiveBeginPlay(): void {
+        super.ReceiveBeginPlay();
+        console.log("child");
+    }
+}
+
+blueprint.mixin(ParentBlueprint, ParentMixin, { objectTakeByNative: true });
+blueprint.mixin(ChildBlueprint, ChildMixin, { objectTakeByNative: true });
+~~~
+
+Blueprint 与 TS 的继承关系必须一一对应。如果 TS prototype 链进入目标 Blueprint 继承层级之外的 UE wrapper，Puerts
+会直接抛出错误，避免把无关 UE 类型的方法混入目标类。
+
 #### 新增字段
 
 新增字段其实是存放在stub对象里，因而：
