@@ -557,7 +557,7 @@ void UPEBlueprintAsset::AddFunction(FName InName, bool IsVoid, FPEGraphPinType I
                 if (ExistingGraph)
                 {
                     ExistingGraph->Rename(*FString::Printf(TEXT("%s%s"), *ExistingGraph->GetName(), TEXT("__Removed")), nullptr,
-                        REN_DontCreateRedirectors | REN_DoNotDirty | REN_ForceNoResetLoaders);
+                        REN_DontCreateRedirectors | REN_DoNotDirty);
                 }
 
                 UK2Node_CustomEvent* EventNode = FEdGraphSchemaAction_K2NewNode::SpawnNode<UK2Node_CustomEvent>(EventGraph,
@@ -609,7 +609,7 @@ void UPEBlueprintAsset::AddFunction(FName InName, bool IsVoid, FPEGraphPinType I
                 if (ExistingGraph)
                 {
                     ExistingGraph->Rename(*FString::Printf(TEXT("%s%s"), *ExistingGraph->GetName(), TEXT("__Removed")), nullptr,
-                        REN_DontCreateRedirectors | REN_DoNotDirty | REN_ForceNoResetLoaders);
+                        REN_DontCreateRedirectors | REN_DoNotDirty);
                 }
             }
             FunctionGraph = FBlueprintEditorUtils::CreateNewGraph(Blueprint,

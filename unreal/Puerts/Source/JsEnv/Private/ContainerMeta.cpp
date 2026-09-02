@@ -98,39 +98,39 @@ PropertyMacro* FContainerMeta::GetBuiltinProperty(BuiltinType type)
                 break;
 #elif ENGINE_MINOR_VERSION > 0 && ENGINE_MAJOR_VERSION > 4
             case TBool:
-                Ret = new FBoolProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FBoolProperty(PropertyMetaRoot, NAME_None);
                 static_cast<FBoolProperty*>(Ret)->SetBoolSize(1, true, 0xFF);
                 break;
             case TByte:
-                Ret = new FByteProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FByteProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TInt:
-                Ret = new FIntProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FIntProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TFloat:
-                Ret = new FFloatProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FFloatProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TDouble:
-                Ret = new FDoubleProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FDoubleProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TInt64:
-                Ret = new FInt64Property(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FInt64Property(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TString:
-                Ret = new FStrProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FStrProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TText:
-                Ret = new FTextProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FTextProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
             case TName:
-                Ret = new FNameProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                Ret = new FNameProperty(PropertyMetaRoot, NAME_None);
                 Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
                 break;
 #else
@@ -195,7 +195,7 @@ PropertyMacro* FContainerMeta::GetObjectProperty(UField* Field)
         Ret = new (EC_InternalUseOnlyConstructor, PropertyMetaRoot, NAME_None, RF_Transient)
             UObjectProperty(FObjectInitializer(), EC_CppProperty, 0, CPF_HasGetValueTypeHash, Class);
 #elif ENGINE_MINOR_VERSION > 0 && ENGINE_MAJOR_VERSION > 4
-        Ret = new FObjectProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+        Ret = new FObjectProperty(PropertyMetaRoot, NAME_None);
         static_cast<FObjectProperty*>(Ret)->PropertyClass = Class;
         Ret->PropertyFlags |= CPF_HasGetValueTypeHash;
 #else
@@ -208,7 +208,7 @@ PropertyMacro* FContainerMeta::GetObjectProperty(UField* Field)
         Ret = new (EC_InternalUseOnlyConstructor, PropertyMetaRoot, NAME_None, RF_Transient)
             UStructProperty(FObjectInitializer(), EC_CppProperty, 0, CPF_HasGetValueTypeHash, ScriptStruct);
 #elif ENGINE_MINOR_VERSION > 0 && ENGINE_MAJOR_VERSION > 4
-        Ret = new FStructProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+        Ret = new FStructProperty(PropertyMetaRoot, NAME_None);
         static_cast<FStructProperty*>(Ret)->Struct = ScriptStruct;
 #if ENGINE_MINOR_VERSION >= 5 && ENGINE_MAJOR_VERSION >= 5
         Ret->SetElementSize(ScriptStruct->PropertiesSize);
@@ -233,12 +233,12 @@ PropertyMacro* FContainerMeta::GetObjectProperty(UField* Field)
         {
             FEnumProperty* EnumProp =
 #if ENGINE_MAJOR_VERSION > 4 && ENGINE_MINOR_VERSION > 4    // 5.5+
-                new FEnumProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+                new FEnumProperty(PropertyMetaRoot, NAME_None);
             EnumProp->SetEnum(Enum);
 #else
                 new FEnumProperty(PropertyMetaRoot, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash, Enum);
 #endif
-            FNumericProperty* UnderlyingProp = new FByteProperty(EnumProp, TEXT("UnderlyingType"), RF_Transient);
+            FNumericProperty* UnderlyingProp = new FByteProperty(EnumProp, TEXT("UnderlyingType"));
             EnumProp->AddCppProperty(UnderlyingProp);
 #if ENGINE_MINOR_VERSION >= 5 && ENGINE_MAJOR_VERSION >= 5
             EnumProp->SetElementSize(UnderlyingProp->GetElementSize());
@@ -251,7 +251,7 @@ PropertyMacro* FContainerMeta::GetObjectProperty(UField* Field)
         }
         else
         {
-            FByteProperty* ByteProp = new FByteProperty(PropertyMetaRoot, NAME_None, RF_Transient);
+            FByteProperty* ByteProp = new FByteProperty(PropertyMetaRoot, NAME_None);
             ByteProp->Enum = Enum;
 
             Ret = ByteProp;

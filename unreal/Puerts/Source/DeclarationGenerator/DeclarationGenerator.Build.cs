@@ -5,19 +5,12 @@
 * This file is subject to the terms and conditions defined in file 'LICENSE', which is part of this source code package.
 */
 
-using System;
-using System.IO;
 using UnrealBuildTool;
 
 public class DeclarationGenerator : ModuleRules 
 {
     public DeclarationGenerator(ReadOnlyTargetRules Target) : base(Target) 
     {
-        PublicIncludePaths.AddRange(
-            new string[] {
-                "Programs/UnrealHeaderTool/Public",
-            }
-        );
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
