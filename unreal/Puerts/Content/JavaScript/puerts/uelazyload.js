@@ -270,31 +270,66 @@ var global = global || (function () { return this; }());
     
     let __tgjsMixin = global.__tgjsMixin;
     global.__tgjsMixin = undefined;
+
+    const mixinPrototypeTargets = new WeakMap();
+    const mixinWrapperPrototypes = new WeakMap();
+
+    function collectMixinMethods(to, mixinClass) {
+        const methods = Object.create(null);
+        const targetPrototype = to.prototype;
+        let prototype = mixinClass.prototype;
+        while (prototype && prototype !== Object.prototype) {
+            // A parent TS mixin already registered on a parent UE class supplies its own
+            // methods through the UE wrapper's prototype chain.
+            const targets = mixinPrototypeTargets.get(prototype);
+            if (targets && Array.from(targets).some(target =>
+                target === targetPrototype || Object.prototype.isPrototypeOf.call(target, targetPrototype))) {
+                break;
+            }
+            // Do not treat the UE wrapper (or one of its ancestors) as a TS mixin class.
+            if (prototype === targetPrototype || Object.prototype.isPrototypeOf.call(prototype, targetPrototype)) {
+                break;
+            }
+            for (const name of Object.getOwnPropertyNames(prototype)) {
+                if (name === 'constructor' || Object.prototype.hasOwnProperty.call(methods, name)) {
+                    continue;
+                }
+                const descriptor = Object.getOwnPropertyDescriptor(prototype, name);
+                if (typeof descriptor.value === 'function') {
+                    methods[name] = descriptor.value;
+                }
+            }
+            prototype = Object.getPrototypeOf(prototype);
+        }
+        return methods;
+    }
     
     function mixin(to, mixinClass, config) {
         config = config || {};
-        let mixinMethods = Object.create(null);
-        let names = Object.getOwnPropertyNames(mixinClass.prototype);
-        for(var i = 0; i < names.length; ++i) {
-            let name = names[i];
-            let descriptor = Object.getOwnPropertyDescriptor(mixinClass.prototype, name);
-            if (typeof descriptor.value === 'function' && name != "constructor") {
-                 mixinMethods[name] = mixinClass.prototype[name];
-            }
-        }
+        const mixinMethods = collectMixinMethods(to, mixinClass);
         let cls = __tgjsMixin(to.StaticClass(), mixinMethods, config.objectTakeByNative, config.inherit, config.noMixinedWarning);
         
         let jsCls = UEClassToJSClass(cls);
+        const addedMethods = [];
         Object.getOwnPropertyNames(mixinMethods).forEach(name => {
-            if (!jsCls.prototype.hasOwnProperty(name)) {
+            if (!Object.prototype.hasOwnProperty.call(jsCls.prototype, name)) {
                 Object.defineProperty(
                     jsCls.prototype,
                     name,
                     Object.getOwnPropertyDescriptor(mixinMethods, name) ||
                     Object.create(null)
                 );
+                addedMethods.push({ name, value: mixinMethods[name] });
             }
         });
+
+        let targets = mixinPrototypeTargets.get(mixinClass.prototype);
+        if (!targets) {
+            targets = new Set();
+            mixinPrototypeTargets.set(mixinClass.prototype, targets);
+        }
+        targets.add(jsCls.prototype);
+        mixinWrapperPrototypes.set(jsCls.prototype, { mixinPrototype: mixinClass.prototype, addedMethods });
                 
         if (config.inherit) {
             config.generatedClass = cls;
@@ -306,6 +341,21 @@ var global = global || (function () { return this; }());
     
     function unmixin(to) {
         __tgjsMixin(to.StaticClass(), {}, undefined, undefined, undefined, true);
+        const binding = mixinWrapperPrototypes.get(to.prototype);
+        if (binding) {
+            for (const method of binding.addedMethods) {
+                const descriptor = Object.getOwnPropertyDescriptor(to.prototype, method.name);
+                if (descriptor && descriptor.value === method.value) {
+                    delete to.prototype[method.name];
+                }
+            }
+            mixinWrapperPrototypes.delete(to.prototype);
+            const targets = mixinPrototypeTargets.get(binding.mixinPrototype);
+            targets.delete(to.prototype);
+            if (targets.size === 0) {
+                mixinPrototypeTargets.delete(binding.mixinPrototype);
+            }
+        }
     }
     
     blueprint.unmixin = unmixin;

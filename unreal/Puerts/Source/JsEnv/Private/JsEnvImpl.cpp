@@ -894,7 +894,7 @@ FJsEnvImpl::~FJsEnvImpl()
     }
 
 #if !defined(ENGINE_INDEPENDENT_JSENV)
-    for (size_t i = 0; i < MixinClasses.Num(); i++)
+    for (int32 i = MixinClasses.Num() - 1; i >= 0; --i)
     {
         if (MixinClasses[i].IsValid())
         {
@@ -4521,6 +4521,14 @@ void FJsEnvImpl::Mixin(const v8::FunctionCallbackInfo<v8::Value>& Info)
     else
     {
         To->ClearFunctionMapsCaches();
+        for (TObjectIterator<UClass> It; It; ++It)
+        {
+            if (To != *It && It->IsChildOf(To) && !It->HasAnyClassFlags(CLASS_Abstract) &&
+                !It->GetName().StartsWith(TEXT("REINST_")))
+            {
+                It->ClearFunctionMapsCaches();
+            }
+        }
         bool IsReuseTemplate = false;
         auto StructWrapper = GetStructWrapper(To, IsReuseTemplate);
         for (int i = 0; i < ReplaceMethodNames.Num(); i++)
