@@ -183,8 +183,20 @@ UFunction* UJSGeneratedClass::Mixin(v8::Isolate* Isolate, UClass* Class, UFuncti
 
     if (!Existed)
     {
+        // Do not copy a parent's mixin trampoline into the child's local override.
+        UJSGeneratedFunction* ParentMixin = Cast<UJSGeneratedFunction>(Super);
+        if (!ParentMixin)
+        {
+            ParentMixin = UJSGeneratedFunction::GetJSGeneratedFunctionFromScript(Super);
+        }
         UFunction* Tmp =
             Cast<UFunction>(StaticDuplicateObject(Super, Class, Super->GetFName(), RF_AllFlags, UFunction::StaticClass()));
+        if (ParentMixin && ParentMixin->Original)
+        {
+            Tmp->Script = ParentMixin->Script;
+            Tmp->SetNativeFunc(ParentMixin->OriginalFunc);
+            Tmp->FunctionFlags = ParentMixin->OriginalFunctionFlags;
+        }
         Tmp->SetSuperStruct(Super);
         Tmp->Next = Class->Children;
         Class->Children = Tmp;
@@ -251,6 +263,7 @@ UFunction* UJSGeneratedClass::Mixin(v8::Isolate* Isolate, UClass* Class, UFuncti
     Function->Original = Super;
     Function->OriginalFunc = Super->GetNativeFunc();
     Function->OriginalFunctionFlags = Super->FunctionFlags;
+    Function->bMixinInheritedFunction = !Existed;
     Super->FunctionFlags |= FUNC_Native;    //让UE不走解析
     Super->SetNativeFunc(&UJSGeneratedFunction::execCallMixin);
     Class->AddNativeFunction(*Super->GetName(), &UJSGeneratedFunction::execCallMixin);
@@ -288,6 +301,7 @@ void UJSGeneratedClass::Restore(UClass* Class)
     {
         if (auto JGF = Cast<UJSGeneratedFunction>(*PP))    // to delete
         {
+            UFunction* InheritedOriginal = JGF->bMixinInheritedFunction ? JGF->Original : nullptr;
             if (JGF->Original)
             {
                 if (JGF->Script.Num() == 0)
@@ -319,6 +333,30 @@ void UJSGeneratedClass::Restore(UClass* Class)
             }
             JGF->Rename(nullptr, OrphanedClass, REN_DontCreateRedirectors | REN_DoNotDirty);
             FLinkerLoad::InvalidateExport(JGF);
+
+            // A local copy of an inherited function only exists for this mixin. Once it is
+            // removed, child instances must resolve the parent's function again.
+            if (InheritedOriginal)
+            {
+                auto InheritedPP = PP;
+                while (*InheritedPP && *InheritedPP != InheritedOriginal)
+                {
+                    InheritedPP = &(*InheritedPP)->Next;
+                }
+                if (*InheritedPP)
+                {
+                    *InheritedPP = InheritedOriginal->Next;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 2 && ENGINE_MINOR_VERSION < 7
+                    if (InheritedPP == &ChildrenPtr)
+                    {
+                        Class->Children = ChildrenPtr;
+                    }
+#endif
+                    Class->RemoveFunctionFromFunctionMap(InheritedOriginal);
+                    InheritedOriginal->Rename(nullptr, OrphanedClass, REN_DontCreateRedirectors | REN_DoNotDirty);
+                    FLinkerLoad::InvalidateExport(InheritedOriginal);
+                }
+            }
         }
         else
         {

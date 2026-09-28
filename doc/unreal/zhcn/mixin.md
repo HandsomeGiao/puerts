@@ -1,5 +1,7 @@
 ## 蓝图mixin
 
+蓝图和 TypeScript 的父子类分别 Mixin 时，参见[分层 Mixin](mixin-inheritance.md)。
+
 把一个ts类（假设是类A）mixin到一个蓝图类（类B）的能力：
 
 * 如果A和B都有同样的函数，A的逻辑会替换B的

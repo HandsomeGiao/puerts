@@ -53,6 +53,8 @@ public:
 
     EFunctionFlags OriginalFunctionFlags;
 
+    bool bMixinInheritedFunction = false;
+
     static constexpr uint8 GEN_FUNC_MAGIC = 107;
 
     FORCEINLINE static void SetJSGeneratedFunctionToScript(UFunction* InFunc, UJSGeneratedFunction* JsGenFunc)
